@@ -12,9 +12,15 @@ def showTasks(request):
         if form.is_valid():
             task = form.save(commit=False)
             if form.cleaned_data['option'] == 0:
-                if form.cleaned_data['cyclic_on'] != None:
+                child = False
+                if form.cleaned_data['is_child']:
                     form.save(commit=True)
-                SchedulerClient.add_job(task)
+                    SchedulerClient.add_child(task)
+                    child = True
+                elif form.cleaned_data['cyclic_on'] != '':
+                    form.save(commit=True)
+                if not child:
+                    SchedulerClient.add_job(task)
             elif form.cleaned_data['option'] < 0:
                 Task.objects.filter(pk=form.cleaned_data['option'] * -1).delete()
                 SchedulerClient.remove_job(form.cleaned_data['option'] * -1)
@@ -29,5 +35,5 @@ def showTasks(request):
                 )
                 SchedulerClient.update(form.cleaned_data['option'], task)
     else:
-        form = TaskForm()
-    return render(request, 'schemer/showTasks.html', {'tasks': Task.objects.all().order_by('time'), 'form': form,})
+        form = TaskForm(None) # a bit sketchy
+    return render(request, 'schemer/showTasks.html', {'tasks': Task.objects.all().order_by('time'), 'form': form})

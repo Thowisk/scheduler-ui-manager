@@ -10,9 +10,12 @@ class SchedulerClient:
     def start():
         SchedulerClient.conn = rpyc.connect('localhost', 42069,
                                             config={'allow_public_attrs': True, 'allow_all_attrs': True})
-        all_entries = Task.objects.all()
+        all_entries = Task.objects.all().order_by('pk')
         for task in all_entries:
-            SchedulerClient.add_job(task)
+            if task.is_child:
+                SchedulerClient.add_child(task)
+            else:
+                SchedulerClient.add_job(task)
 
     @staticmethod
     def add_job(task):
@@ -53,3 +56,12 @@ class SchedulerClient:
             SchedulerClient.conn.root.remove_job(str(job_id))
         except:
             print(' /!\\ Couldn\'t get a connection to the scheduler service /!\\')
+
+    @staticmethod
+    def add_child(task):
+            SchedulerClient.update_parent_id(task.dependency, task.pk)
+
+    @staticmethod
+    def update_parent_id(id, child_id):
+            params = {'dependency': True, 'child_id': str(child_id)}
+            SchedulerClient.conn.root.modify_job(str(id), **params)

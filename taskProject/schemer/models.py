@@ -16,6 +16,7 @@ class Task(models.Model):
         ('weeks', 'weeks'),
     ]
 
+    is_child = models.BooleanField(default=False)
     dependency = models.CharField(max_length=250, default=None, null=True)
     file = models.FilePathField(null=False, path='C:/Users/'+ os.getlogin() + '/Documents/schedulerService/scripts/', default=None, match='^.*\.(bat|py)$')
     date = models.DateField(default=datetime.date.today,)
