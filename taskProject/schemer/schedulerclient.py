@@ -36,7 +36,6 @@ class SchedulerClient:
 
     @staticmethod
     def update(job_id, new_task):
-        try:
             params = {'cycle_on': new_task.cyclic_on,
                       'interval': new_task.interval,
                       'next_run_time': date_and_time_to_datetime(new_task.date, new_task.time).__str__(),
@@ -47,8 +46,6 @@ class SchedulerClient:
             if params['cycle_on'] != None:
                 SchedulerClient.conn.root.reschedule_job(str(job_id), jobstore=None, trigger='interval', **params)
             SchedulerClient.conn.root.resume_job(str(job_id))
-        except:
-            print(' /!\\ Couldn\'t get a connection to the scheduler service /!\\')
 
     @staticmethod
     def remove_job(job_id):

@@ -25,24 +25,25 @@ class SchedulerService(rpyc.Service):
             return job
 
     def exposed_modify_job(self, job_id, **params):
-        if params['dependency']:
-            new_id = ''
-            for job in scheduler.get_jobs():
-                if str(job.id).split('_')[0] == job_id:
-                    try:
-                        if str(job.id).split('_')[1] == 'parentof':
-                            new_id = str(job.id) + ',' + params['child_id']
-                    except:
-                        new_id = str(job.id) + '_parentof_' + params['child_id']
-                    self.exposed_remove_job(str(job.id))
-                    task = dao.TaskDao.get_task(str(job.id).split('_')[0])
-                    params = {'cycle_on': task['cyclic_on'],
-                              'interval': task['interval'],
-                              'next_run_time': date_and_time_to_datetime(task['date'], task['time']).__str__(),
-                              'args': [task['file']],
-                              'pk': new_id}
-                    self.exposed_add_job(**params)
-        else:
+        try:
+            if params['dependency']:
+                new_id = ''
+                for job in scheduler.get_jobs():
+                    if str(job.id).split('_')[0] == job_id:
+                        try:
+                            if str(job.id).split('_')[1] == 'parentof':
+                                new_id = str(job.id) + ',' + params['child_id']
+                        except:
+                            new_id = str(job.id) + '_parentof_' + params['child_id']
+                        self.exposed_remove_job(str(job.id))
+                        task = dao.TaskDao.get_task(str(job.id).split('_')[0])
+                        params = {'cycle_on': task['cyclic_on'],
+                                  'interval': task['interval'],
+                                  'next_run_time': date_and_time_to_datetime(task['date'], task['time']).__str__(),
+                                  'args': [task['file']],
+                                  'pk': new_id}
+                        self.exposed_add_job(**params)
+        finally:
             job = None
             if params['cycle_on'] not in ['seconds', 'minutes', 'hours', 'days', 'weeks']:
                 job = scheduler.modify_job(job_id,  args=params['args'], id='single_' + str(job_id))
@@ -94,6 +95,12 @@ def listener(event):
         for child_id in str(id_parts[2]).split(','):
             child_task = dao.TaskDao.get_task(child_id)
             scheduler.add_job(exec_task, args=[child_task['file']], id=str(child_task['id']))
+
+'''
+
+100_parentof(42,43_parentof(45),44)
+
+'''
 
 if __name__ == '__main__':
     scheduler = BackgroundScheduler({'apscheduler.job_defaults.max_instances': '100'})

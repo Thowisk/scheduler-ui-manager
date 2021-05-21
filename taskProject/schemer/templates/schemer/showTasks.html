@@ -11,6 +11,7 @@
 				<th scope="col">Label</th>
 				<th scope="col">Cyclic on</th>
 				<th scope="col">State</th>
+                <th scope="col">Child</th>
                 <th scope="col">ID</th>
 				<th scope="col">Edit</th>
 			</tr>
@@ -24,6 +25,7 @@
 						<td>{{ task.label }}</td>
 						<td>{{ task.cyclic_on }}</td>
 						<td>{{ task.state }}</td>
+                        <td>{{ task.is_child }}</td>
 						<td>{{ task.pk }}</td>
 
 						<td> 
@@ -39,6 +41,7 @@
 										label: '{{ task.label }}',
 										cyclic_on: '{{ task.cyclic_on }}',
                                         interval: {{ task.interval }},
+                                        is_child: '{{ task.is_child }}',
 										pk: {{ task.pk }},
                                         dependency: '{{ task.dependency }}',
                                         pks: [{% for task in tasks %} '{{ task.pk }}', {% endfor %}]
@@ -54,6 +57,8 @@
 				<td></td>
 				<td></td>
 				<td></td>
+                <td></td>
+
 
 				<td> 
 					<button 
