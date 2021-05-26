@@ -2,10 +2,32 @@
     function setup() {
         formatFiles()
         setChildInputListener()
+        setConnectButton()
+    }
+
+    function formatFiles() {
+        let files = document.getElementsByClassName('file')
+        for(let file of files) {
+            file.innerHTML = file.innerHTML.split('/').splice(-1)[0]
+        }
+    }
+
+    function setConnectButton() {
+        console.log(document.getElementById('connectButton').classList)
+        if(document.getElementById('connectButton').classList.contains('failure')) {
+            alert('/!\\ Couldn\'t get a connection to the scheduler service /!\\');
+        }else if(document.getElementById('connectButton').classList.contains('True')) {
+            document.getElementById('connectButton').innerHTML = 'Connected'
+            document.getElementById('connectButton').classList.remove('btn-danger');
+            document.getElementById('connectButton').classList.add('btn-success');
+        }else{
+            document.getElementById('connectButton').innerHTML = 'Disconnected'
+            document.getElementById('connectButton').classList.remove('btn-success');
+            document.getElementById('connectButton').classList.add('btn-danger');
+        }
     }
 
     function setChildInputListener() {
-        console.log(document.getElementById('id_is_child'))
         document.getElementById('id_is_child').addEventListener('click', ()=>{alterForm()})
     }
 
@@ -19,6 +41,7 @@
         let dependency = ''
         PKsToWrite.forEach(pk => dependency += '<option value="' + pk + '">' + pk + '</option>')
         document.getElementById('id_dependency').innerHTML = dependency
+        {#document.getElementById('id_dependency').setAttribute('multiple', '')#}
     }
 
     function prepareSend() {
@@ -28,28 +51,24 @@
         document.getElementById('id_cyclic_on').disabled = false
         document.getElementById('id_interval').disabled = false
         document.getElementById('id_dependency').disabled = false
-        console.log(document.getElementById('id_date').value)
-        console.log(document.getElementById('id_time').value)
     }
 
-        function alterForm(info) {
-            if (info === void 0) {
-                checkboxValue = document.getElementById('id_is_child').checked
-                document.getElementById('id_date').disabled = checkboxValue
-                document.getElementById('id_time').disabled = checkboxValue
-				document.getElementById('id_label').disabled = checkboxValue
-				document.getElementById('id_cyclic_on').disabled = checkboxValue
-				document.getElementById('id_interval').disabled = checkboxValue
-                document.getElementById('id_dependency').disabled = !checkboxValue
-            } else {
-                document.getElementById('id_date').disabled = false
-                document.getElementById('id_time').disabled = false
-				document.getElementById('id_label').disabled = false
-				document.getElementById('id_cyclic_on').disabled = false
-				document.getElementById('id_interval').disabled = false
-                document.getElementById('id_dependency').disabled = true
-            }
+    function alterForm(info) {
+        if (info === void 0) {
+            checkboxValue = document.getElementById('id_is_child').checked
+            document.getElementById('id_date').disabled = checkboxValue
+            document.getElementById('id_time').disabled = checkboxValue
+            document.getElementById('id_cyclic_on').disabled = checkboxValue
+            document.getElementById('id_interval').disabled = checkboxValue
+            document.getElementById('id_dependency').disabled = !checkboxValue
+        } else {
+            document.getElementById('id_date').disabled = false
+            document.getElementById('id_time').disabled = false
+            document.getElementById('id_cyclic_on').disabled = false
+            document.getElementById('id_interval').disabled = false
+            document.getElementById('id_dependency').disabled = true
         }
+    }
 
 		/*
 		if info.pk < 0 then :
@@ -176,12 +195,7 @@
 			return h_m[0] + ':' + h_m[1];
 		}
 
-		function formatFiles() {
-            let files = document.getElementsByClassName('file')
-            for(let file of files) {
-                file.innerHTML = file.innerHTML.split('/').splice(-1)[0]
-            }
-        }
+
 
 		if (window.history.replaceState) {
 			window.history.replaceState(null, null, window.location.href);

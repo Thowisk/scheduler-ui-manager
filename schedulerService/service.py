@@ -1,8 +1,9 @@
 import datetime
+
 import rpyc
 import subprocess
 import os
-import dao
+import requests
 
 from utils import *
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
@@ -16,7 +17,7 @@ class SchedulerService(rpyc.Service):
     def exposed_add_job(self, **kwargs):
         try:
             if kwargs['instant_exec']:
-                job = scheduler.add_job(exec_task, args=kwargs['args'], id='single_'+str(kwargs['pk']))
+                job = scheduler.add_job(exec_task, args=kwargs['args'], id=str(kwargs['pk']))
                 return job
         except:
             cycle_param = {kwargs['cycle_on']: kwargs['interval']}
@@ -25,25 +26,25 @@ class SchedulerService(rpyc.Service):
             return job
 
     def exposed_modify_job(self, job_id, **params):
-        try:
-            if params['dependency']:
-                new_id = ''
-                for job in scheduler.get_jobs():
-                    if str(job.id).split('_')[0] == job_id:
-                        try:
-                            if str(job.id).split('_')[1] == 'parentof':
-                                new_id = str(job.id) + ',' + params['child_id']
-                        except:
-                            new_id = str(job.id) + '_parentof_' + params['child_id']
-                        self.exposed_remove_job(str(job.id))
-                        task = dao.TaskDao.get_task(str(job.id).split('_')[0])
-                        params = {'cycle_on': task['cyclic_on'],
-                                  'interval': task['interval'],
-                                  'next_run_time': date_and_time_to_datetime(task['date'], task['time']).__str__(),
-                                  'args': [task['file']],
-                                  'pk': new_id}
-                        self.exposed_add_job(**params)
-        finally:
+        # try:
+        #     if params['dependency']:
+        #         new_id = ''
+        #         for job in scheduler.get_jobs():
+        #             if str(job.id).split('_')[0] == job_id:
+        #                 try:
+        #                     if str(job.id).split('_')[1] == 'parentof':
+        #                         new_id = str(job.id) + ',' + params['child_id']
+        #                 except:
+        #                     new_id = str(job.id) + '_parentof_' + params['child_id']
+        #                 self.exposed_remove_job(str(job.id))
+        #                 task = dao.TaskDao.get_task(str(job.id).split('_')[0])
+        #                 params = {'cycle_on': task['cyclic_on'],
+        #                           'interval': task['interval'],
+        #                           'next_run_time': date_and_time_to_datetime(task['date'], task['time']).__str__(),
+        #                           'args': [task['file']],
+        #                           'pk': new_id}
+        #                 self.exposed_add_job(**params)
+        # finally:
             job = None
             if params['cycle_on'] not in ['seconds', 'minutes', 'hours', 'days', 'weeks']:
                 job = scheduler.modify_job(job_id,  args=params['args'], id='single_' + str(job_id))
@@ -75,6 +76,10 @@ class SchedulerService(rpyc.Service):
     def exposed_get_jobs(self, jobstore=None):
         return scheduler.get_jobs(jobstore)
 
+    def exposed_clean_scheduler(self):
+        [job.remove() for job in scheduler.get_jobs()]
+        print('scheduler cleaned')
+
 def exec_task(to_exec):
     res = 2 # file not found default return code
     file_extension = to_exec.split('/')[-1].split('.')[-1]
@@ -86,21 +91,18 @@ def exec_task(to_exec):
 
 def log(task_id, task_info):
     with open(DEFAULT_SERVICE_ROOT + 'logs/LOG', 'a') as file:
-        file.write('[' + datetime.now().__str__() + '] {task_id: ' + str(task_id) + ', return_code: ' + str(task_info['result'].returncode) + ', script: ' + task_info['script'].split('/')[-1] + ' }\n')
+        file.write('[' + datetime.now().__str__() + '] task with id ' + str(task_id) + ' returned code ' + str(task_info['result'].returncode) + ' after ' + task_info['script'].split('/')[-1] + ' execution\n')
 
 def listener(event):
-    log(str(event.job_id).split('_')[0], event.retval)
-    id_parts = str(event.job_id).split('_')
-    if len(id_parts) == 3:
-        for child_id in str(id_parts[2]).split(','):
-            child_task = dao.TaskDao.get_task(child_id)
-            scheduler.add_job(exec_task, args=[child_task['file']], id=str(child_task['id']))
+    log(str(event.job_id), event.retval)
+    base_url = 'http://127.0.0.1:8000/schemer/job_return?'
+    requests.request('GET', base_url + 'id=' + str(event.job_id) + '&status=' + str(event.retval['result'].returncode))
 
-'''
-
-100_parentof(42,43_parentof(45),44)
-
-'''
+    # id_parts = str(event.job_id).split('_')
+    # if len(id_parts) == 3:
+    #     for child_id in str(id_parts[2]).split(','):
+    #         child_task = dao.TaskDao.get_task(child_id)
+    #         scheduler.add_job(exec_task, args=[child_task['file']], id=str(child_task['id']))
 
 if __name__ == '__main__':
     scheduler = BackgroundScheduler({'apscheduler.job_defaults.max_instances': '100'})

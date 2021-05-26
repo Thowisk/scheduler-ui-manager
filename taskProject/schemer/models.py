@@ -23,6 +23,6 @@ class Task(models.Model):
     time = models.TimeField(auto_now=False,)
     label = models.CharField(max_length=100, default='')
     cyclic_on = models.CharField(blank=True, null=True, choices=cyclic_choices, max_length=10)
-    interval = models.IntegerField(default=1,)
-    state = models.IntegerField(default=0) # -1: KO / 0: None / 1: OK
+    interval = models.IntegerField(default=1)
+    state = models.IntegerField(default=-1) # -1: None / 0: OK / 1: KO
     option = models.IntegerField(default=0)

@@ -1,10 +1,11 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from .models import Task
 from .forms import TaskForm
 from .schedulerclient import SchedulerClient
 # Create your views here.
 
-def showTasks(request):
+def showTasks(request, connected=False):
     if request.method == "POST":
         form = TaskForm(request.POST)
         print(form.errors)
@@ -12,14 +13,9 @@ def showTasks(request):
         if form.is_valid():
             task = form.save(commit=False)
             if form.cleaned_data['option'] == 0:
-                child = False
-                if form.cleaned_data['is_child']:
+                if form.cleaned_data['is_child'] or form.cleaned_data['cyclic_on'] != '':
                     form.save(commit=True)
-                    SchedulerClient.add_child(task)
-                    child = True
-                elif form.cleaned_data['cyclic_on'] != '':
-                    form.save(commit=True)
-                if not child:
+                elif form.cleaned_data['cyclic_on'] == '':
                     SchedulerClient.add_job(task)
             elif form.cleaned_data['option'] < 0:
                 Task.objects.filter(pk=form.cleaned_data['option'] * -1).delete()
@@ -36,4 +32,27 @@ def showTasks(request):
                 SchedulerClient.update(form.cleaned_data['option'], task)
     else:
         form = TaskForm(None) # a bit sketchy
-    return render(request, 'schemer/showTasks.html', {'tasks': Task.objects.all().order_by('time'), 'form': form})
+    return render(request, 'schemer/showTasks.html', {'tasks': Task.objects.all().order_by('time'), 'form': form, 'connected': connected})
+
+
+def connect(request):
+
+    connected = False
+    if SchedulerClient.conn is None:
+        try:
+            SchedulerClient.start()
+            connected = True
+        except:
+            connected = 'failure'
+    else:
+        SchedulerClient.shutdown()
+
+    return showTasks(request, connected=connected)
+
+# http://127.0.0.1:8000/schemer/job_return?id=100&status=0|1|2
+
+def job_return(request):
+    job_id = request.GET.get('id', None)
+    # status = request.GET.get('status', None)
+    [SchedulerClient.add_job(task) for task in Task.objects.all().filter(dependency=job_id)]
+    return HttpResponse(status=200)
