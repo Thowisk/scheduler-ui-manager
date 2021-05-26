@@ -14,9 +14,12 @@
 <body onload="setup()">
 <header class="page-header">
     <div class="container">
-        <h1>
-            <a href="#">Scheduler</a>
-        </h1>
+        <div class="d-flex justify-content-between">
+            <h1>
+                <a href="#">Scheduler</a>
+                <a id="connectButton" class="btn btn-success {{ connected }}" href="/schemer/connect"> Connection to the scheduler service </a>
+            </h1>
+        </div>
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="nav-tasks-tab" data-toggle="tab" href="#nav-tasks" role="tab" aria-controls="tasks" aria-selected="true">Tasks</a>
