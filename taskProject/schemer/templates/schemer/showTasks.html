@@ -43,7 +43,6 @@
                                         interval: {{ task.interval }},
                                         is_child: '{{ task.is_child }}',
 										pk: {{ task.pk }},
-                                        dependency: '{{ task.dependency }}',
                                         pks: [{% for task in tasks %} '{{ task.pk }}', {% endfor %}]
 										})">Edit</button> 
 						</td>

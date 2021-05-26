@@ -9,6 +9,7 @@ class TaskForm(forms.ModelForm):
     def __init__(self, request):
         super().__init__(request)
         TaskForm.pks_choices = [(str(task.pk), str(task.pk)) for task in Task.objects.all()]
+        print(TaskForm.pks_choices)
 
     pks_choices = [(str(task.pk), str(task.pk)) for task in Task.objects.all()]
 

@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from .models import Task
 from .forms import TaskForm
 from .schedulerclient import SchedulerClient
+import ast
 # Create your views here.
 
 def showTasks(request, connected=False):
@@ -53,6 +54,11 @@ def connect(request):
 
 def job_return(request):
     job_id = request.GET.get('id', None)
+    all_entries = Task.objects.all()
+    for task in all_entries:
+        dependency_list = ast.literal_eval(task.dependency)
+        if len(dependency_list) == 1 and dependency_list[0] == str(job_id):
+            SchedulerClient.add_job(task)
+
     # status = request.GET.get('status', None)
-    [SchedulerClient.add_job(task) for task in Task.objects.all().filter(dependency=job_id)]
     return HttpResponse(status=200)
