@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from .models import Task
 from .forms import TaskForm
 from .schedulerclient import SchedulerClient
-import ast
+from .taskdependencies import TaskWaitingList, TaskDependencies
 # Create your views here.
 
 def showTasks(request, connected=False):
@@ -37,28 +37,33 @@ def showTasks(request, connected=False):
 
 
 def connect(request):
-
     connected = False
     if SchedulerClient.conn is None:
         try:
             SchedulerClient.start()
+            TaskWaitingList()
             connected = True
         except:
             connected = 'failure'
     else:
         SchedulerClient.shutdown()
-
     return showTasks(request, connected=connected)
 
 # http://127.0.0.1:8000/schemer/job_return?id=100&status=0|1|2
 
 def job_return(request):
-    job_id = request.GET.get('id', None)
+    if TaskWaitingList.dependencies == None:
+        TaskWaitingList()
+    task_id = int(request.GET.get('id', None))
+    state = int(request.GET.get('state', None))
+    Task.objects.filter(pk=task_id).update(state=state)
     all_entries = Task.objects.all()
-    for task in all_entries:
-        dependency_list = ast.literal_eval(task.dependency)
-        if len(dependency_list) == 1 and dependency_list[0] == str(job_id):
-            SchedulerClient.add_job(task)
-
-    # status = request.GET.get('status', None)
+    TaskWaitingList.has_been_exec(task_id, state)
+    for task in TaskWaitingList.dependencies:
+        if task.is_executable():
+            for task_to_exec in all_entries:
+                if task_to_exec.pk == task.id:
+                    SchedulerClient.add_job(task_to_exec, child=True)
+                    print("yes")
+                task.reset_dependencies()
     return HttpResponse(status=200)

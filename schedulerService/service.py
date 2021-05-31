@@ -96,7 +96,7 @@ def log(task_id, task_info):
 def listener(event):
     log(str(event.job_id), event.retval)
     base_url = 'http://127.0.0.1:8000/schemer/job_return?'
-    requests.request('GET', base_url + 'id=' + str(event.job_id) + '&status=' + str(event.retval['result'].returncode))
+    requests.request('GET', base_url + 'id=' + str(event.job_id) + '&state=' + str(event.retval['result'].returncode))
 
     # id_parts = str(event.job_id).split('_')
     # if len(id_parts) == 3:
@@ -112,6 +112,8 @@ if __name__ == '__main__':
     server = ThreadedServer(SchedulerService, port=42069, protocol_config=protocol_config)
     try:
         print("server started")
+        print("server host : " + server.host)
+        print("server port : " + str(server.port))
         server.start()
     except (KeyboardInterrupt, SystemExit):
         pass

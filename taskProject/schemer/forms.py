@@ -34,4 +34,4 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ('is_child', 'dependency', 'file', 'date', 'time', 'label', 'cyclic_on', 'interval', 'option', )
+        fields = ('is_child', 'dependency', 'file', 'label','date', 'time', 'cyclic_on', 'interval', 'option', )
