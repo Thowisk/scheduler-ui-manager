@@ -6,31 +6,26 @@ from django.forms.widgets import NumberInput, ClearableFileInput
 
 class TaskForm(forms.ModelForm):
 
-    def __init__(self, request):
-        super().__init__(request)
-        TaskForm.pks_choices = [(str(task.pk), str(task.pk)) for task in Task.objects.all()]
-        print(TaskForm.pks_choices)
+    def __init__(self, *args, **kwargs):
+        super(TaskForm, self).__init__(*args, **kwargs)
+        self.pks_choices = [(str(task.pk), str(task.pk)) for task in Task.objects.all()]
+        print(self.pks_choices)
 
-    pks_choices = [(str(task.pk), str(task.pk)) for task in Task.objects.all()]
+        self.cyclic_choices = [
+            ('seconds', 'seconds'),
+            ('minutes', 'minutes'),
+            ('hours', 'hours'),
+            ('days', 'days'),
+            ('weeks', 'weeks'),
+        ]
 
-    cyclic_choices = [
-        ('seconds', 'seconds'),
-        ('minutes', 'minutes'),
-        ('hours', 'hours'),
-        ('days', 'days'),
-        ('weeks', 'weeks'),
-    ]
-
-
-    date = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
-    time = forms.TimeField(widget=NumberInput(attrs={'type': 'time'}))
-    dependency = forms.MultipleChoiceField(required=False, choices=pks_choices, )
-    label = forms.CharField(required=False)
-    cyclic_on = forms.ChoiceField(required=False, choices=cyclic_choices, help_text='<br> <i> No selection will result in a single execution of that task. </i>')
-    interval = forms.IntegerField(required=False)
-    # file = forms.FilePathField(widget=ClearableFileInput(), path='/')
-    # /!\ # possible XSS attack with ClearableFileInput widget /!\
-    is_child = forms.BooleanField(label='Child task ?', required=False)
+        self.fields['date'] = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
+        self.fields['time'] = forms.TimeField(widget=NumberInput(attrs={'type': 'time'}))
+        self.fields['dependency'] = forms.MultipleChoiceField(required=False, choices=self.pks_choices, )
+        self.fields['label'] = forms.CharField(required=False)
+        self.fields['cyclic_on'] = forms.ChoiceField(required=False, choices=self.cyclic_choices, help_text='<br> <i> No selection will result in a single execution of that task. </i>')
+        self.fields['interval'] = forms.IntegerField(required=False)
+        self.fields['is_child'] = forms.BooleanField(label='Child task ?', required=False)
 
     class Meta:
         model = Task

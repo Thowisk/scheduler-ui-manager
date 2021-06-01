@@ -15,7 +15,7 @@ def showTasks(request, connected=False):
             task = form.save(commit=False)
             if form.cleaned_data['option'] == 0:
                 if form.cleaned_data['is_child'] or form.cleaned_data['cyclic_on'] != '':
-                    form.save(commit=True)
+                    task.save()
                 elif form.cleaned_data['cyclic_on'] == '':
                     SchedulerClient.add_job(task)
             elif form.cleaned_data['option'] < 0:
@@ -31,9 +31,8 @@ def showTasks(request, connected=False):
                     interval=form.cleaned_data['interval']
                 )
                 SchedulerClient.update(form.cleaned_data['option'], task)
-    else:
-        form = TaskForm(None) # a bit sketchy
-    return render(request, 'schemer/showTasks.html', {'tasks': Task.objects.all().order_by('time'), 'form': form, 'connected': connected})
+    form = TaskForm()
+    return render(request, 'schemer/base.html', {'tasks': Task.objects.all().order_by('time'), 'form': form, 'connected': connected})
 
 
 def connect(request):
@@ -64,6 +63,5 @@ def job_return(request):
             for task_to_exec in all_entries:
                 if task_to_exec.pk == task.id:
                     SchedulerClient.add_job(task_to_exec, child=True)
-                    print("yes")
                 task.reset_dependencies()
     return HttpResponse(status=200)

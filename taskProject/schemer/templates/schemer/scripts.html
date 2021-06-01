@@ -79,7 +79,7 @@
 			fill modal fields with info
 		*/
 		function setModalData(info) {
-		    setDependencyOptions(info.pks, info.pk)
+		    {#setDependencyOptions(info.pks, info.pk)#}
 			document.getElementById('id_option').style.display = 'none';
 			document.querySelector("label[for=id_option]").style.display = 'none';
 			try {
@@ -194,13 +194,6 @@
 			}
 			return h_m[0] + ':' + h_m[1];
 		}
-
-		function formatFiles() {
-            let files = document.getElementsByClassName('file')
-            for(let file of files) {
-                file.innerHTML = file.innerHTML.split('/').splice(-1)[0]
-            }
-        }
 
 		if (window.history.replaceState) {
 			window.history.replaceState(null, null, window.location.href);

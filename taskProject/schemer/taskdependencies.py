@@ -14,7 +14,6 @@ class TaskWaitingList:
         if TaskWaitingList.dependencies is not None:
             [d.change_dependency_state(task_id, state) for d in TaskWaitingList.dependencies]
 
-
 class TaskDependencies:
     def __init__(self, id, dependencies, satisfaction_pattern=None):
         self.saved_dependencies = dependencies
@@ -31,6 +30,7 @@ class TaskDependencies:
         for i in range(len(self.dependencies)):
             if self.dependencies[i][0] == id:
                 self.dependencies[i] = (id, new_state)
+
         # for d in self.dependencies:
         #     print(d)
         #     print(d[0] == str(id))

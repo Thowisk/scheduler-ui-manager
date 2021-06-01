@@ -39,16 +39,13 @@
         <div class="col">
             <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-tasks" role="tabpanel" aria-labelledby="nav-tasks-tab">
-                    {% block tasks %}
-                    {% endblock %}
+                    {% include 'schemer/showTasks.html' %}
                 </div>
-                <div class="tab-pane fade show active" id="nav-diagram" role="tabpanel" aria-labelledby="nav-diagram-tab">
-                    {% block diagram %}
-                    {% endblock %}
+                <div class="tab-pane fade" id="nav-diagram" role="tabpanel" aria-labelledby="nav-diagram-tab">
+                    {% include 'schemer/diagram.html' %}
                 </div>
-                <div class="tab-pane fade show active" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab">
-                    {% block settings %}
-                    {% endblock %}
+                <div class="tab-pane fade" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab">
+                    {% include 'schemer/settings.html' %}
                 </div>
             </div>
         </div>
