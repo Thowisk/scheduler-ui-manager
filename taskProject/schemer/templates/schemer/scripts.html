@@ -1,8 +1,10 @@
 <script>
+
     function setup() {
         formatFiles()
         setChildInputListener()
         setConnectButton()
+        drawDiagram()
     }
 
     function formatFiles() {
@@ -13,7 +15,6 @@
     }
 
     function setConnectButton() {
-        console.log(document.getElementById('connectButton').classList)
         if(document.getElementById('connectButton').classList.contains('failure')) {
             alert('/!\\ Couldn\'t get a connection to the scheduler service /!\\');
         }else if(document.getElementById('connectButton').classList.contains('True')) {
@@ -37,7 +38,6 @@
         PKsToWrite = PKs
             .map(pk => parseInt(pk) !== ownPK ? parseInt(pk) : null)
             .filter(pk => pk !== null)
-        console.log(PKsToWrite)
         let dependency = ''
         PKsToWrite.forEach(pk => dependency += '<option value="' + pk + '">' + pk + '</option>')
         document.getElementById('id_dependency').innerHTML = dependency
@@ -195,7 +195,33 @@
 			return h_m[0] + ':' + h_m[1];
 		}
 
+		function drawDiagram() {
+             var nodes = [
+                 {
+                    id:"a",
+                    label:"A"
+                 },
+                 {
+                    id:"b",
+                    label:"B"
+                 }];
+             var edges = [
+                 {
+                    from:"a",
+                    to:"b"
+                 }];
+             data = {
+                 nodes:nodes,
+                 edges:edges
+             }
+             var options = {};
+             var container = document.querySelector('#diagram');
+             network = new vis.Network(container, data, options);
+        }
+
+
 		if (window.history.replaceState) {
 			window.history.replaceState(null, null, window.location.href);
 		}
+
 </script>
