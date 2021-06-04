@@ -1,47 +1,75 @@
 <script>
 
+    const black = '#000000'
+    const red = '#FF6347'
+    const green = '#98FB98'
+
+    let network
+    let nodeIdToFocus
+    let maxId = 0
+
+    let changes = {
+        news: [],
+        changes: []
+    }
+
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+
     function setup() {
         formatFiles()
         setChildInputListener()
         setConnectButton()
-        drawDiagram()
+        setDiagram()
+        setInputDiagramListeners()
+        setView()
+    }
+
+    function setView() {
+        diagram_view = '{{ diagram_view }}'
+        if (diagram_view === 1) {
+            document.getElementById('nav-tasks').classList.remove('show', 'active')
+            document.getElementById('nav-diagram').classList.add('show', 'active')
+        }
     }
 
     function formatFiles() {
         let files = document.getElementsByClassName('file')
-        for(let file of files) {
+        for (let file of files) {
             file.innerHTML = file.innerHTML.split('/').splice(-1)[0]
         }
     }
 
-    function setConnectButton() {
-        if(document.getElementById('connectButton').classList.contains('failure')) {
-            alert('/!\\ Couldn\'t get a connection to the scheduler service /!\\');
-        }else if(document.getElementById('connectButton').classList.contains('True')) {
-            document.getElementById('connectButton').innerHTML = 'Connected'
-            document.getElementById('connectButton').classList.remove('btn-danger');
-            document.getElementById('connectButton').classList.add('btn-success');
-        }else{
-            document.getElementById('connectButton').innerHTML = 'Disconnected'
-            document.getElementById('connectButton').classList.remove('btn-success');
-            document.getElementById('connectButton').classList.add('btn-danger');
+    function setConnectButton(state) {
+        button = document.getElementById('connectButton')
+        schedulerConnectionStatus = state | '{{ connected }}'
+        if (schedulerConnectionStatus === 1) {
+            button.innerHTML = 'Connected'
+            button.classList.remove('btn-danger')
+            button.classList.add('btn-success')
+        } else if (schedulerConnectionStatus === 0) {
+            button.innerHTML = 'Disconnected'
+            button.classList.remove('btn-success')
+            button.classList.add('btn-danger')
+        } else if (schedulerConnectionStatus === 'failure') {
+            alert('/!\\ Couldn\'t get a connection to the scheduler service /!\\')
         }
     }
 
     function setChildInputListener() {
-        document.getElementById('id_is_child').addEventListener('click', ()=>{alterForm()})
+        document.getElementById('id_is_child').addEventListener('click', () => {
+            alterForm()
+        })
     }
 
     function setDependencyOptions(PKs, ownPK) {
-        console.log(PKs)
-        console.log(ownPK)
         PKsToWrite = PKs
             .map(pk => parseInt(pk) !== ownPK ? parseInt(pk) : null)
             .filter(pk => pk !== null)
         let dependency = ''
         PKsToWrite.forEach(pk => dependency += '<option value="' + pk + '">' + pk + '</option>')
         document.getElementById('id_dependency').innerHTML = dependency
-        {#document.getElementById('id_dependency').setAttribute('multiple', '')#}
     }
 
     function prepareSend() {
@@ -70,158 +98,418 @@
         }
     }
 
-		/*
-		if info.pk < 0 then :
-			launch modal as a create task modal
-			clear modal fields
-		else
-			launch modal an edit task modal
-			fill modal fields with info
-		*/
-		function setModalData(info) {
-		    {#setDependencyOptions(info.pks, info.pk)#}
-			document.getElementById('id_option').style.display = 'none';
-			document.querySelector("label[for=id_option]").style.display = 'none';
-			try {
-				document.querySelector(".errorlist").style.display = 'none';
-			} catch (e) {}
-			if (info.pk < 0) {
-			    //create section
-				document.getElementById('saveButton').style.display = 'none';
-				document.getElementById('removeButton').style.display = 'none';
-				document.getElementById('createButton').style.display = 'block';
-				document.getElementById('id_file').style = ''
-				document.getElementById('id_date').value = getCurrentDate()
-                document.getElementById('id_time').value = getCurrentTime()
-				document.getElementById('id_label').value = '';
-				document.getElementById('id_cyclic_on').value = '';
-				document.getElementById('id_interval').value = 1
-				document.getElementById('id_option').value = 0;
-				document.getElementById('id_is_child').checked = false
-
-                //console.log(currentDate)
-                //console.log(currentYear_Month_Day)
-                //console.log(currentTime)
-
-			} else {
-			    // edit section
-			    try {
-			        document.getElementById('saveButton').style.display = 'block';
-				    document.getElementById('removeButton').style.display = 'block';
-				    document.getElementById('createButton').style.display = 'none';
-				    document.getElementById('id_file').value = info.file;
-				    document.getElementById('id_date').value = formatDate(info.date);
-				    document.getElementById('id_time').value = formatTime(info.time);
-				    document.getElementById('id_label').value = info.label;
-				    document.getElementById('id_cyclic_on').value = info.cyclic_on;
-				    document.getElementById('id_interval').value = info.interval;
-				    document.getElementById('id_option').value = info.pk;
-				    document.getElementById('id_is_child').checked = info.is_child;
-				    document.getElementById('id_dependency').value = info.dependency;
-                } catch (e) { }
-			}
-            alterForm(info)
-		}
-
-		function setRemoveInfo() {
-			document.getElementById('id_option').value = -1 * document.getElementById('id_option').value;
-		}
-
-
-		function getCurrentDate() {
-		    const currentDate = new Date();
-		    let monthAdjuster = '';
-            let dayAdjuster = '';
-            if (currentDate.getMonth()+1<10) {
-                monthAdjuster = '0'
+    /*
+    if info.pk < 0 then :
+        launch modal as a create task modal
+        clear modal fields
+    else
+        launch modal an edit task modal
+        fill modal fields with info
+    */
+    function setModalData(info) {
+        {#setDependencyOptions(info.pks, info.pk)#}
+        document.getElementById('id_option').style.display = 'none';
+        document.querySelector("label[for=id_option]").style.display = 'none';
+        try {
+            document.querySelector(".errorlist").style.display = 'none';
+        } catch (e) {
+        }
+        if (info.pk < 0) {
+            //create section
+            document.getElementById('saveButton').style.display = 'none';
+            document.getElementById('removeButton').style.display = 'none';
+            document.getElementById('createButton').style.display = 'block';
+            document.getElementById('id_file').style = ''
+            document.getElementById('id_date').value = getCurrentDate()
+            document.getElementById('id_time').value = getCurrentTime()
+            document.getElementById('id_label').value = '';
+            document.getElementById('id_cyclic_on').value = '';
+            document.getElementById('id_interval').value = 1
+            document.getElementById('id_option').value = 0;
+            document.getElementById('id_is_child').checked = false
+        } else {
+            // edit section
+            try {
+                document.getElementById('saveButton').style.display = 'block';
+                document.getElementById('removeButton').style.display = 'block';
+                document.getElementById('createButton').style.display = 'none';
+                document.getElementById('id_file').value = info.file;
+                document.getElementById('id_date').value = formatDate(info.date);
+                document.getElementById('id_time').value = formatTime(info.time);
+                document.getElementById('id_label').value = info.label;
+                document.getElementById('id_cyclic_on').value = info.cyclic_on;
+                document.getElementById('id_interval').value = info.interval;
+                document.getElementById('id_option').value = info.pk;
+                document.getElementById('id_is_child').checked = info.is_child;
+                document.getElementById('id_dependency').value = info.dependency;
+            } catch (e) {
             }
-            if(currentDate.getDate()<10) {
-                dayAdjuster = '0'
+        }
+        alterForm(info)
+    }
+
+    function setRemoveInfo() {
+        document.getElementById('id_option').value = -1 * document.getElementById('id_option').value;
+    }
+
+
+    function getCurrentDate() {
+        const currentDate = new Date();
+        let monthAdjuster = '';
+        let dayAdjuster = '';
+        if (currentDate.getMonth() + 1 < 10) {
+            monthAdjuster = '0'
+        }
+        if (currentDate.getDate() < 10) {
+            dayAdjuster = '0'
+        }
+
+        date = '' + currentDate.getFullYear()
+            + '-'
+            + monthAdjuster
+            + (currentDate.getMonth() + 1)
+            + '-'
+            + dayAdjuster
+            + currentDate.getDate();
+        return date
+    }
+
+    function getCurrentTime() {
+        return new Date()
+            .toString()
+            .split(' ')[4]
+            .slice(0, -3);
+    }
+
+    function formatDate(date) {
+        const dateParts = date.split(' ');
+        const months = {
+            'January': '01',
+            'February': '02',
+            'March': '03',
+            'April': '04',
+            'May': '05',
+            'June': '06',
+            'July': '07',
+            'August': '08',
+            'September': '09',
+            'October': '10',
+            'November': '11',
+            'December': '12'
+        };
+        let d = dateParts[1].replace(',', '');
+        if (d.length < 2) {
+            d = '0' + d;
+        }
+        let m = months[dateParts[0]];
+        let y = dateParts[2];
+        return y + '-' + m + '-' + d;
+    }
+
+    function formatTime(time) {
+        const timeParts = time.split(' ');
+        const h_m = timeParts[0].split(':');
+        if (timeParts[1] === 'p.m.' && h_m[0] !== '12') {
+            h_m[0] = '' + (parseInt(h_m[0]) + 12);
+        } else if (timeParts[1] === 'a.m.' && h_m[0] === '12') {
+            h_m[0] = '' + (parseInt(h_m[0]) - 12);
+        }
+        if (h_m[0].length < 2) {
+            h_m[0] = '0' + h_m[0];
+        }
+        return h_m[0] + ':' + h_m[1];
+    }
+
+    function setDiagramFiles() {
+        document.getElementById('fileDiagram').innerHTML = document.getElementById('id_file').innerHTML
+    }
+
+    function setDiagramInputValue() {
+        document.getElementById('dateDiagram').value = getCurrentDate()
+        document.getElementById('timeDiagram').value = getCurrentTime()
+    }
+
+    function setDiagram(changes) {
+        var n = JSON.parse('{{ diagram_data|safe }}')
+        setDiagramFiles()
+        setDiagramInputValue()
+        let nodes = []
+        let edges = []
+        n.forEach(task => {
+            if (maxId < task.id) {
+                maxId = task.id
             }
+            nodes.push({
+                id: task.id,
+                label: task.label.toString() + '\n' + task.file.split('/').splice(-1)[0],
+                size: 150,
+                color: '#E0E0FF',
+                shape: 'box',
+                font: {face: 'monospace', align: 'left'},
+            })
+            if (task.dependency.length !== 0) {
+                task.dependency.forEach(d => {
+                    switch (d.val) {
+                        case 0:
+                            code = 'return code = 0'
+                            color = green
+                            break;
+                        case 1:
+                            code = 'return code > 1'
+                            color = red;
+                            break
+                        case -1:
+                            code = 'any return code'
+                            color = black
+                    }
+                    edges.push({
+                        from: parseInt(d.parent),
+                        to: task.id,
+                        color: {color: color},
+                        physics: false,
+                        smooth: {type: 'cubicBezier'},
+                        width: 3,
+                        id: +d.parent + '->' + task.id + ' (' + code + ')'
+                    })
+                })
+            } else {
+                nodeIdToFocus = task.id
+            }
+        })
 
-            date = '' + currentDate.getFullYear()
-                    + '-'
-                    + monthAdjuster
-                    + (currentDate.getMonth()+1)
-                    + '-'
-                    + dayAdjuster
-                    + currentDate.getDate();
-            return date
-        }
-
-        function getCurrentTime() {
-		    return new Date()
-                    .toString()
-                    .split(' ')[4]
-                    .slice(0, -3);
-        }
-
-		function formatDate(date) {
-			const dateParts = date.split(' ');
-			const months = {
-			    'January': '01',
-                'February': '02',
-                'March': '03',
-                'April': '04',
-                'May': '05',
-                'June': '06',
-                'July': '07',
-                'August': '08',
-                'September': '09',
-                'October': '10',
-                'November': '11',
-                'December': '12'
-			};
-			let d = dateParts[1].replace(',', '');
-			if (d.length < 2) {
-				d = '0' + d;
-			}
-			let m = months[dateParts[0]];
-			let y = dateParts[2];
-			return y + '-' + m + '-' + d;
-		}
-
-		function formatTime(time) {
-			const timeParts = time.split(' ');
-			const h_m = timeParts[0].split(':');
-			if (timeParts[1] === 'p.m.' && h_m[0] !== '12') {
-				h_m[0] = ''+(parseInt(h_m[0])+12);
-			} else if (timeParts[1] === 'a.m.' && h_m[0] === '12') {
-				h_m[0] = ''+(parseInt(h_m[0])-12);
-			}
-			if (h_m[0].length < 2) {
-				h_m[0] = '0' + h_m[0];
-			}
-			return h_m[0] + ':' + h_m[1];
-		}
-
-		function drawDiagram() {
-             var nodes = [
-                 {
-                    id:"a",
-                    label:"A"
-                 },
-                 {
-                    id:"b",
-                    label:"B"
-                 }];
-             var edges = [
-                 {
-                    from:"a",
-                    to:"b"
-                 }];
-             data = {
-                 nodes:nodes,
-                 edges:edges
-             }
-             var options = {};
-             var container = document.querySelector('#diagram');
-             network = new vis.Network(container, data, options);
+        try {
+            if (changes.new) {
+                nodes.push({
+                    id: changes.new.id,
+                    label: changes.new.id + '\n' + changes.new.file.split('/').splice(-1)[0],
+                    size: 150,
+                    color: '#E0E0FF',
+                    shape: 'box',
+                    font: {face: 'monospace', align: 'left'},
+                })
+            }
+        } catch (e) {
         }
 
 
-		if (window.history.replaceState) {
-			window.history.replaceState(null, null, window.location.href);
-		}
+        data = {
+            nodes: new vis.DataSet(nodes),
+            edges: new vis.DataSet(edges)
+        }
+
+        var options = {
+            autoResize: true,
+            height: '100%',
+            width: '100%',
+            locale: 'en',
+            edges: {
+                arrows: {to: {enabled: true}},
+                smooth: {enabled: false}
+            },
+            nodes: {
+                font: {'face': 'monospace', 'align': 'left'}
+            },
+            layout: {
+                improvedLayout: true,
+                hierarchical: {
+                    enabled: true,
+                    sortMethod: "directed",
+                    direction: "UD",
+                    nodeSpacing: 150,
+                    levelSeparation: 150,
+                }
+            },
+            physics: {
+                hierarchicalRepulsion: {
+                    nodeDistance: 100
+                }
+            }
+        };
+
+
+        var container = document.querySelector('#diagram');
+        network = new vis.Network(container, data, options);
+        setNetworkListeners()
+    }
+
+    function focusNetwork() {
+        network.focus(nodeIdToFocus, {scale: 1})
+    }
+
+    function setNetworkListeners() {
+        network.on('selectNode', onNodeSelected)
+        network.on('deselectNode', onNodeDeselected)
+        network.on('selectEdge', onEdgeSelected)
+        network.on('deselectEdge', onEdgeDeselected)
+    }
+
+    // class .active .show pour montrer un onglet nav-link
+
+
+    function onNodeSelected(event) {
+        console.log('onNodeSelected')
+        document.getElementById('nav-add').classList.remove('show', 'active')
+        document.getElementById('nav-dependencies').classList.remove('show', 'active')
+        document.getElementById('nav-task').classList.add('show', 'active')
+        populateDependencyInputs(event.nodes[0])
+        populateDependenciesSelect(event.edges)
+        console.log(event)
+    }
+
+    function populateDependencyInputs(node) {
+        document.getElementById('fromDependency').value = node
+    }
+
+    function populateDependenciesSelect(options) {
+        select = document.getElementById('dependenciesSelect')
+        toInner = ''
+        options.forEach(option => {
+            toInner += '<option value="'+option+'">'+option+'</option>'
+        })
+        select.innerHTML = toInner
+    }
+
+    function onNodeDeselected(event) {
+        // disable things
+        console.log('onNodeDeselected')
+        console.log(event)
+    }
+
+    function onEdgeSelected(event) {
+        if (event.nodes.length === 0) {
+            document.getElementById('nav-add').classList.remove('show', 'active')
+            document.getElementById('nav-task').classList.remove('show', 'active')
+            document.getElementById('nav-dependencies').classList.add('show', 'active')
+        }
+        console.log('onEdgeSelected')
+        console.log(event)
+    }
+
+    function onEdgeDeselected(event) {
+        // disable other things
+        console.log('onEdgeDeselected')
+        console.log(event)
+    }
+
+    function addElementDiagram() {
+        if (checkDiagramInput()) {
+            let params = {
+                new: {
+                    id: maxId + 1,
+                    is_child: 0,
+                    dependency: [],
+                    file: document.getElementById('fileDiagram').value,
+                    date: document.getElementById('dateDiagram').value,
+                    time: document.getElementById('timeDiagram').value,
+                    label: document.getElementById('labelDiagram').value,
+                    cyclic_on: document.getElementById('cyclicDiagram').value,
+                    interval: document.getElementById('intervalDiagram').value
+                }
+            }
+            changes.news.push(params)
+            maxId++
+
+            var xhttp = new XMLHttpRequest();
+            div = document.createElement('div')
+            div.innerHTML = '{% csrf_token %}'
+            crsf_token = div.firstChild.value
+            xhttp.open('POST', 'diagram_data_return', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.setRequestHeader("X-CSRFToken", crsf_token);
+            xhttp.send('' +
+                'new=1&' +
+                'file=' + params.new.file + '&' +
+                'date=' + params.new.date + '&' +
+                'time=' + params.new.time + '&' +
+                'label=' + params.new.label + '&' +
+                'cyclic_on=' + params.new.cyclic_on + '&' +
+                'interval=' + params.new.interval);
+
+            window.location.reload(false)
+        }
+    }
+
+    function connectToService() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open('GET', 'connect', true)
+        xhttp.send('connection')
+        xhttp.onload = function () {
+            switch (xhttp.status) {
+                case 200:
+                    setConnectButton(1)
+                    break
+                case 201:
+                    setConnectButton(0)
+                    break
+                case 500:
+                    setConnectButton('failure')
+            }
+        }
+    }
+
+    function removeElementDiagram() {
+
+    }
+
+    function checkDiagramInput() {
+        file = document.getElementById('fileDiagram').value
+        date = document.getElementById('dateDiagram').value
+        time = document.getElementById('timeDiagram').value
+        label = document.getElementById('labelDiagram').value
+        cyclicOn = document.getElementById('cyclicDiagram').value
+        interval = document.getElementById('intervalDiagram').value
+        if (label === '') {
+            setDiagramWarning('Please give a label to your task.')
+            return false
+        }
+        if (!new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$').test(time)) {
+            setDiagramWarning('Please fill the time input properly.')
+            return false
+        }
+        if (!new RegExp('^\[0-9]{4}\-(0[1-9]|1[012])\-(0[1-9]|1[0-9]|2[0-9]|3[01])$').test(date)) {
+            setDiagramWarning('Please fill the date input properly.')
+            return false
+        }
+        if (cyclicOn === '') {
+            setDiagramWarning('Single execution task may be created from the tab.')
+            return false
+        }
+        return true
+    }
+
+    function setDiagramWarning(message) {
+        $('#warningDiagram').html(message)
+    }
+
+    function setInputDiagramListeners() {
+        document.getElementById('fileDiagram').addEventListener('click', () => {
+            setDiagramWarning('&nbsp;')
+        })
+        document.getElementById('dateDiagram').addEventListener('click', () => {
+            setDiagramWarning('&nbsp;')
+        })
+        document.getElementById('timeDiagram').addEventListener('click', () => {
+            setDiagramWarning('&nbsp;')
+        })
+        document.getElementById('cyclicDiagram').addEventListener('click', () => {
+            setDiagramWarning('&nbsp;')
+        })
+        document.getElementById('intervalDiagram').addEventListener('click', () => {
+            setDiagramWarning('&nbsp;')
+        })
+    }
+
+    function addDependency() {
+
+    }
+
+    function removeDependencies() {
+
+    }
+
+    function removeTask() {
+
+    }
+
 
 </script>

@@ -1,8 +1,94 @@
-<div id="diagram"
-     style="
+<div class="d-flex">
+    <div id="diagram"
+         style="
         display:block;
-        width:800px;
-        height:800px;
+        width:70%;
+        height:80vh;
         border:solid;
         background-color:white;">
+    </div>
+    <div class="d-flex flex-column">
+        <button class="btn ml-5 mt-2 mb-2" onclick="focusNetwork()">Focus on the network</button>
+        <div>
+            <ul class="nav nav-tabs" id="diagram-nav" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="nav-tasks-tab" data-toggle="tab" href="#nav-add" role="tab"
+                       aria-controls="tasks" aria-selected="true">Add</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="nav-diagram-tab" data-toggle="tab" href="#nav-task" role="tab"
+                       aria-controls="diagram" aria-selected="false">Edit task</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="nav-settings-tab" data-toggle="tab" href="#nav-dependencies" role="tab"
+                       aria-controls="contact" aria-selected="false">Edit dependency</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="tab-content" id="nav-diagramContent">
+                    <div class="tab-pane fade show active" id="nav-add" role="tabpanel" aria-labelledby="nav-add-tab">
+                        <div class="d-flex flex-column ml-5 mt-5">
+                            <label for="fileDiagram">File : </label>
+                            <select name="file" id="fileDiagram">
+
+                            </select>
+
+                            <label for="labelDiagram">Label : </label><input id="labelDiagram" type="text">
+
+                            <label for="dateDiagram">Date : </label><input id="dateDiagram" type="date">
+                            <label for="timeDiagram">Time : </label><input id="timeDiagram" type="time">
+
+                            <label for="cyclicDiagram">Cyclic on : </label>
+                            <select name="cyclicOn" id="cyclicDiagram">
+                                <option value=""></option>
+                                <option value="seconds">seconds</option>
+                                <option value="minutes">minutes</option>
+                                <option value="hours">hours</option>
+                                <option value="days">days</option>
+                                <option value="weeks">weeks</option>
+                            </select>
+                            <label for="intervalDiagram">Interval : </label><input id="intervalDiagram" type="number"
+                                                                                   value="1">
+
+                            <p id="warningDiagram" class="text-danger">&nbsp;</p>
+
+                            <button id="addButtonDiagram" class="btn btn-success mt-2" onclick="addElementDiagram()">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="nav-task" role="tabpanel" aria-labelledby="nav-task-tab">
+                        <div class="d-flex flex-column ml-5 mt-5">
+                            <label for="fromDependency">from : </label><input id="fromDependency" type="number" disabled>
+                            <label for="toDependency">to : </label><input id="toDependency" type="number">
+
+                            <button id="addDependency" class="btn btn-success mt-2" onclick="addDependency()">Add</button>
+
+                            <label for="dependenciesSelect">Existing dependencies : </label>
+                            <select name="dependencies" id="dependenciesSelect" multiple>
+
+                            </select>
+                            <button id="addDependency" class="btn btn-danger mt-2" onclick="removeDependencies()">Remove</button>
+                            <button id="addDependency" class="btn btn-danger mt-2" onclick="removeTask()">Remove task</button>
+
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="nav-dependencies" role="tabpanel"
+                         aria-labelledby="nav-dependencies-tab">
+                        EDIT DEPENDENCIES
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
 </div>

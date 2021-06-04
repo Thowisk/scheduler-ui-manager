@@ -7,7 +7,7 @@ class TaskWaitingList:
 
     def __init__(self):
         TaskWaitingList.dependencies = []
-        [TaskWaitingList.dependencies.append(TaskDependencies(task.pk, ast.literal_eval(task.dependency))) for task in Task.objects.all().filter(is_child=True)]
+        [TaskWaitingList.dependencies.append(TaskDependencies(task.pk, ast.literal_eval(task.dependency), task.satisfaction_pattern)) for task in Task.objects.all().filter(is_child=True)]
 
     @staticmethod
     def has_been_exec(task_id, state):

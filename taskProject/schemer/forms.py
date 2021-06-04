@@ -8,8 +8,7 @@ class TaskForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
-        self.pks_choices = [(str(task.pk), str(task.pk)) for task in Task.objects.all()]
-        print(self.pks_choices)
+        self.pks_choices = [(str(task.pk), str(task.pk)+ ' (' + task.file.split('/')[-1] + ')') for task in Task.objects.all()]
 
         self.cyclic_choices = [
             ('seconds', 'seconds'),
