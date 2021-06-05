@@ -28,7 +28,7 @@ def show_tasks(request):
             if form.cleaned_data['option'] == 0:
                 if form.cleaned_data['is_child'] or form.cleaned_data['cyclic_on'] != '':
                     if task.dependency != []:
-                        task.satisfaction_pattern = [(parent_id, 0) for parent_id in ast.literal_eval(task.dependency)]
+                        task.satisfaction_pattern = [(int(parent_id), 0) for parent_id in ast.literal_eval(task.dependency)]
                     else:
                         task.satisfaction_pattern = []
                     task.save()
@@ -46,7 +46,7 @@ def show_tasks(request):
                     cyclic_on=form.cleaned_data['cyclic_on'],
                     interval=form.cleaned_data['interval'],
                     dependency=form.cleaned_data['dependency'],
-                    satisfaction_pattern=[(parent_id, 0) for parent_id in form.cleaned_data['dependency']]
+                    satisfaction_pattern=[(int(parent_id), 0) for parent_id in form.cleaned_data['dependency']]
                 )
     form = TaskForm()
     tasks = Task.objects.all().order_by('time')
@@ -157,10 +157,10 @@ def diagram_new_dependency(request):
     for task in tasks:
         if task.pk == int(info['to']):
             dep_list = ast.literal_eval(task.dependency)
-            dep_list.append(str(info['from']))
+            dep_list.append(int(info['from']))
             task.dependency = str(dep_list)
             satis_pat_list = ast.literal_eval(task.satisfaction_pattern)
-            satis_pat_list.append((str(info['from']), 0))
+            satis_pat_list.append((int(info['from']), 0))
             task.satisfaction_pattern = str(satis_pat_list)
             task.is_child = True
             task.save()
@@ -182,11 +182,11 @@ def diagram_edit_dependency(request):
         if task.pk == int(to):
             satis_pattern_list = ast.literal_eval(task.satisfaction_pattern)
             for val in satis_pattern_list:
-                if from_ in val:
+                if int(from_) in val:
                     if info['returncode'] == 'Any':
-                        satis_pattern_list[satis_pattern_list.index(val)] = (from_, -1)
+                        satis_pattern_list[satis_pattern_list.index(val)] = (int(from_), -1)
                     else:
-                        satis_pattern_list[satis_pattern_list.index(val)] = (from_, int(info['returncode']))
+                        satis_pattern_list[satis_pattern_list.index(val)] = (int(from_), int(info['returncode']))
                     task.satisfaction_pattern = satis_pattern_list
                     task.save()
                     break

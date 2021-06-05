@@ -15,7 +15,7 @@ class TaskWaitingList:
         """
         TaskWaitingList.dependencies = []
         [TaskWaitingList.dependencies.append(
-            TaskDependencies(task.pk, ast.literal_eval(task.dependency), task.satisfaction_pattern)) for task in
+            TaskDependencies(task.pk, ast.literal_eval(task.dependency), ast.literal_eval(task.satisfaction_pattern))) for task in
             Task.objects.all().filter(is_child=True)]
 
     @staticmethod
@@ -60,6 +60,9 @@ class TaskDependencies:
         :param new_state: the new state
         :return: None
         """
+
+        # TODO any return code -1
+
         for i in range(len(self.dependencies)):
             if self.dependencies[i][0] == id:
                 self.dependencies[i] = (id, new_state)
