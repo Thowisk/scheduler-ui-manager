@@ -6,11 +6,19 @@ from .models import Task
 from .forms import TaskForm
 from .schedulerclient import SchedulerClient
 from .taskdependencies import TaskWaitingList
-# Create your views here.
 
-connected = SchedulerClient.conn is None
 
-def showTasks(request):
+def show_tasks(request):
+    """
+    :param request contains the form
+    returns the main page with the form from the tab listing the tasks.
+    gives the template information about :
+        - existing tasks 'tasks'
+        - the form 'form'
+        - service connection status 'connected'
+        - a json like object with the necessary information to build the network diagram 'diagram_data'
+        -
+    """
     if request.method == "POST":
         form = TaskForm(request.POST)
         print(form.errors)
@@ -60,34 +68,43 @@ def showTasks(request):
             i = 0
             for dd in dependency_list:
                 dep.append({'parent': dd, 'val': satisfaction_pattern_list[i][1]})
-                i+=1
+                i += 1
             d['dependency'] = dep
         d['file'] = task.file
         data.append(d)
     data = json.dumps(data)
-    print(data)
+    # print(data)
     view_on_diagram = 0
-    return render(request, 'schemer/base.html', {'tasks': tasks, 'form': form, 'connected': connected, 'diagram_data': data, 'diagram_view': view_on_diagram})
+    return render(request, 'schemer/base.html',
+                  {'tasks': tasks, 'form': form, 'connected': int(SchedulerClient.conn is not None),
+                   'diagram_data': data})
 
 
 def connect(request):
+    """
+    GET route with no arguments, used as a trigger.
+    starts or shuts down the service executing the tasks.
+    return to the client a code about the connection status with the service executing the tasks.
+    """
     if SchedulerClient.conn is None:
         try:
             SchedulerClient.start()
             TaskWaitingList()
-            connected = 1
             return HttpResponse(status=200)
         except:
-            connected = 'failure'
             return HttpResponse(status=500)
     else:
         SchedulerClient.shutdown()
-        connected = 0
         return HttpResponse(status=201)
 
-# http://127.0.0.1:8000/schemer/job_return?id=100&status=0|1|2
 
 def job_return(request):
+    """
+    route GET with the job id 'id' which has been executed and it's return code 'state'.
+    alter the TaskDependencies object linked to the children of the task which has been executed and check if any child can
+    be executed, if so the TaskDependencies object is reset
+    :param request: 'id', 'state"
+    """
     if TaskWaitingList.dependencies == None:
         TaskWaitingList()
     task_id = int(request.GET.get('id', None))
@@ -104,9 +121,104 @@ def job_return(request):
     return HttpResponse(status=200)
 
 
-def diagram_data_return(request):
+def diagram_new_task(request):
+    """
+    route POST that creates a new task from the diagram tab,
+    :param request: takes a 'file', 'date', 'time', 'label', 'cyclic_on' and an 'interval' parameter.
+    """
     info = request.POST.dict()
-    if info['new'] == '1':
-        new_task = Task(file=info['file'], date=info['date'], time=info['time'], label= info['label'], cyclic_on=info['cyclic_on'], interval=info['interval'])
-        new_task.save()
+    new_task = Task(file=info['file'], date=info['date'], time=info['time'], label=info['label'],
+                    cyclic_on=info['cyclic_on'], interval=info['interval'])
+    new_task.save()
+    return HttpResponse(status=200)
+
+
+def diagram_remove_task(request):
+    """
+    route POST that removes a task,
+    :param request: takes one argument 'id', the task id.
+    """
+    info = request.POST.dict()
+    tasks = Task.objects.all()
+    for task in tasks:
+        if task.pk == int(info['id']):
+            task.delete()
+            break
+    return HttpResponse(status=200)
+
+
+def diagram_new_dependency(request):
+    """
+    route POST that creates a dependency to a non-child or child task,
+    :param request: takes 2 arguments 'from' the parent id, and 'to' the child id.
+    """
+    info = request.POST.dict()
+    tasks = Task.objects.all()
+    for task in tasks:
+        if task.pk == int(info['to']):
+            dep_list = ast.literal_eval(task.dependency)
+            dep_list.append(str(info['from']))
+            task.dependency = str(dep_list)
+            satis_pat_list = ast.literal_eval(task.satisfaction_pattern)
+            satis_pat_list.append((str(info['from']), 0))
+            task.satisfaction_pattern = str(satis_pat_list)
+            task.is_child = True
+            task.save()
+            break
+    return HttpResponse(status=200)
+
+
+def diagram_edit_dependency(request):
+    """
+    route POST that edits an existing dependency by changing the wished return code,
+    :param request: takes 2 parameters, a string 'id' representing the dependency like 'from->to' and the wished
+    return code 'returncode'
+    """
+    tasks = Task.objects.all()
+    info = request.POST.dict()
+    dependency = info['id']
+    from_, to = dependency.split('->')
+    for task in tasks:
+        if task.pk == int(to):
+            satis_pattern_list = ast.literal_eval(task.satisfaction_pattern)
+            for val in satis_pattern_list:
+                if from_ in val:
+                    if info['returncode'] == 'Any':
+                        satis_pattern_list[satis_pattern_list.index(val)] = (from_, -1)
+                    else:
+                        satis_pattern_list[satis_pattern_list.index(val)] = (from_, int(info['returncode']))
+                    task.satisfaction_pattern = satis_pattern_list
+                    task.save()
+                    break
+            break
+    return HttpResponse(status=200)
+
+
+def diagram_remove_dependencies(request):
+    """
+    route POST that removes at least one dependency to a child task,
+    :param request: takes n parameters, n being the number of dependencies being deleted and the value is the id of
+    the dependency like 'from->to'.
+    example:    '0=101->102
+                &1=102->103
+                &2=103->104'
+    """
+    tasks = Task.objects.all()
+    info = request.POST.dict()
+    for key in info:
+        from_, to = info[key].split('->')
+        for task in tasks:
+            if task.pk == int(to):
+                dep_list = ast.literal_eval(task.dependency)
+                satis_pattern_list = ast.literal_eval(task.satisfaction_pattern)
+                dep_list.remove(from_)
+                for val in satis_pattern_list:
+                    if from_ in val:
+                        satis_pattern_list.remove(val)
+                task.dependency = dep_list
+                task.satisfaction_pattern = satis_pattern_list
+                if len(dep_list) == 0:
+                    task.is_child = False
+                task.save()
+                break
     return HttpResponse(status=200)

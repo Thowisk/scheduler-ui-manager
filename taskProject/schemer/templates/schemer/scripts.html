@@ -1,5 +1,9 @@
 <script>
 
+    div = document.createElement('div')
+    div.innerHTML = '{% csrf_token %}'
+    crsf_token = div.firstChild.value
+
     const black = '#000000'
     const red = '#FF6347'
     const green = '#98FB98'
@@ -52,8 +56,6 @@
             button.innerHTML = 'Disconnected'
             button.classList.remove('btn-success')
             button.classList.add('btn-danger')
-        } else if (schedulerConnectionStatus === 'failure') {
-            alert('/!\\ Couldn\'t get a connection to the scheduler service /!\\')
         }
     }
 
@@ -255,7 +257,7 @@
                             color = green
                             break;
                         case 1:
-                            code = 'return code > 1'
+                            code = 'return code = 1'
                             color = red;
                             break
                         case -1:
@@ -276,22 +278,6 @@
                 nodeIdToFocus = task.id
             }
         })
-
-        try {
-            if (changes.new) {
-                nodes.push({
-                    id: changes.new.id,
-                    label: changes.new.id + '\n' + changes.new.file.split('/').splice(-1)[0],
-                    size: 150,
-                    color: '#E0E0FF',
-                    shape: 'box',
-                    font: {face: 'monospace', align: 'left'},
-                })
-            }
-        } catch (e) {
-        }
-
-
         data = {
             nodes: new vis.DataSet(nodes),
             edges: new vis.DataSet(edges)
@@ -329,6 +315,7 @@
 
         var container = document.querySelector('#diagram');
         network = new vis.Network(container, data, options);
+        focusNetwork()
         setNetworkListeners()
     }
 
@@ -364,7 +351,7 @@
         select = document.getElementById('dependenciesSelect')
         toInner = ''
         options.forEach(option => {
-            toInner += '<option value="'+option+'">'+option+'</option>'
+            toInner += '<option value="' + option + '">' + option + '</option>'
         })
         select.innerHTML = toInner
     }
@@ -380,6 +367,7 @@
             document.getElementById('nav-add').classList.remove('show', 'active')
             document.getElementById('nav-task').classList.remove('show', 'active')
             document.getElementById('nav-dependencies').classList.add('show', 'active')
+            populateEditDependencyInputs(event.edges[0], network.body.edges[event.edges[0]].options.color.color)
         }
         console.log('onEdgeSelected')
         console.log(event)
@@ -391,41 +379,30 @@
         console.log(event)
     }
 
-    function addElementDiagram() {
+    function addTask() {
+        file = document.getElementById('fileDiagram').value
+        date = document.getElementById('dateDiagram').value
+        time = document.getElementById('timeDiagram').value
+        label = document.getElementById('labelDiagram').value
+        cyclic_on = document.getElementById('cyclicDiagram').value
+        interval = document.getElementById('intervalDiagram').value
         if (checkDiagramInput()) {
-            let params = {
-                new: {
-                    id: maxId + 1,
-                    is_child: 0,
-                    dependency: [],
-                    file: document.getElementById('fileDiagram').value,
-                    date: document.getElementById('dateDiagram').value,
-                    time: document.getElementById('timeDiagram').value,
-                    label: document.getElementById('labelDiagram').value,
-                    cyclic_on: document.getElementById('cyclicDiagram').value,
-                    interval: document.getElementById('intervalDiagram').value
-                }
-            }
-            changes.news.push(params)
             maxId++
 
             var xhttp = new XMLHttpRequest();
-            div = document.createElement('div')
-            div.innerHTML = '{% csrf_token %}'
-            crsf_token = div.firstChild.value
-            xhttp.open('POST', 'diagram_data_return', true);
+            xhttp.open('POST', 'diagram_new_task', true);
             xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhttp.setRequestHeader("X-CSRFToken", crsf_token);
             xhttp.send('' +
-                'new=1&' +
-                'file=' + params.new.file + '&' +
-                'date=' + params.new.date + '&' +
-                'time=' + params.new.time + '&' +
-                'label=' + params.new.label + '&' +
-                'cyclic_on=' + params.new.cyclic_on + '&' +
-                'interval=' + params.new.interval);
-
-            window.location.reload(false)
+                'file=' + file + '&' +
+                'date=' + date + '&' +
+                'time=' + time + '&' +
+                'label=' + label + '&' +
+                'cyclic_on=' + cyclic_on + '&' +
+                'interval=' + interval);
+            xhttp.onload = function () {
+                window.location.reload(false)
+            }
         }
     }
 
@@ -442,13 +419,10 @@
                     setConnectButton(0)
                     break
                 case 500:
-                    setConnectButton('failure')
+                    alert('Can\'t connect to the scheduler service.')
+                    setConnectButton(0)
             }
         }
-    }
-
-    function removeElementDiagram() {
-
     }
 
     function checkDiagramInput() {
@@ -499,17 +473,135 @@
         })
     }
 
-    function addDependency() {
+    function checkDependenciesInputs() {
+        fromDependency = document.getElementById('fromDependency').value
+        toDependency = document.getElementById('toDependency').value
+        dependencyNameToTest = fromDependency + '->' + toDependency + ' (return code = 0)'
+        return (network.body.nodeIndices.includes(parseInt(toDependency)) && !(dependencyNameToTest in network.body.edgeIndices))
+    }
 
+    function addDependency() {
+        from = document.getElementById('fromDependency').value
+        to = document.getElementById('toDependency').value
+        if (checkDependenciesInputs()) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open('POST', 'diagram_new_dependency', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.setRequestHeader("X-CSRFToken", crsf_token);
+            xhttp.send('' +
+                'from=' + from + '&' +
+                'to=' + to)
+            xhttp.onload = function () {
+                window.location.reload(false)
+            }
+        } else {
+            alert('Please check if task n° ' + to + ' exists.')
+        }
     }
 
     function removeDependencies() {
-
+        dependenciesToRemove = getSelectValues(document.getElementById('dependenciesSelect')).map(val => val.split(' ')[0])
+        word = 'dependency'
+        if (dependenciesToRemove.length > 1) {
+            word = 'dependencies'
+        }
+        if (confirm('Are you sure you want to delete the selected ' + word + ' ?'))
+            if (dependenciesToRemove.length !== 0) {
+                request = ''
+                index = 0
+                dependenciesToRemove.forEach(dep => {
+                    request += '' + index + '=' + dep + '&'
+                    index++
+                })
+                request = request.substring(0, request.length - 1)
+                var xhttp = new XMLHttpRequest();
+                xhttp.open('POST', 'diagram_remove_dependencies', true);
+                xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhttp.setRequestHeader("X-CSRFToken", crsf_token);
+                xhttp.send(request)
+                xhttp.onload = function () {
+                    window.location.reload(false)
+                }
+            } else {
+                alert('Please select at least one dependency to remove')
+            }
     }
 
     function removeTask() {
+        id = document.getElementById('fromDependency').value
+        if (confirm('Are you sure you want to delete task ' + id + ' ?')) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open('POST', 'diagram_remove_task', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.setRequestHeader("X-CSRFToken", crsf_token);
+            xhttp.send('id=' + id)
+            xhttp.onload = function () {
+                window.location.reload(false)
+            }
+        }
+    }
+
+    function getSelectValues(select) {
+        var result = [];
+        var options = select && select.options;
+        var opt;
+        for (var i = 0, iLen = options.length; i < iLen; i++) {
+            opt = options[i];
+            if (opt.selected) {
+                result.push(opt.value || opt.text);
+            }
+        }
+        return result;
+    }
+
+    function saveDependency() {
+        dependencyId = document.getElementById('dependencyId').value
+        if (document.getElementById('anyReturnCodeCheckbox').checked) {
+            newReturnCodeValue = 'Any'
+        } else {
+            newReturnCodeValue = document.getElementById('returnCode').value
+        }
+        var xhttp = new XMLHttpRequest();
+            xhttp.open('POST', 'diagram_edit_dependency', true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.setRequestHeader("X-CSRFToken", crsf_token);
+            xhttp.send('id='+dependencyId+'&' +
+                'returncode='+newReturnCodeValue)
+            xhttp.onload = function () {
+                window.location.reload(false)
+            }
+    }
+
+    function setInputsAndButtonTaskEditing(state) {
 
     }
 
+    function setInputsAndButtonDependencyEditing(state) {
+
+    }
+
+    function populateEditDependencyInputs(dependencyId, color) {
+        document.getElementById('dependencyId').value = dependencyId.split(' ')[0]
+        switch (color) {
+            case black:
+                document.getElementById('anyReturnCodeCheckbox').checked = true
+                document.getElementById('returnCode').value = ''
+                document.getElementById('returnCode').disabled = true
+                break
+            case red:
+                document.getElementById('anyReturnCodeCheckbox').checked = false
+                document.getElementById('returnCode').value = '1'
+                document.getElementById('returnCode').disabled = false
+                break
+            case green:
+                document.getElementById('anyReturnCodeCheckbox').checked = false
+                document.getElementById('returnCode').value = '0'
+                document.getElementById('returnCode').disabled = false
+        }
+    }
+
+    function alterEditDependencyInput() {
+        document.getElementById('returnCode').disabled = document.getElementById('anyReturnCodeCheckbox').checked
+    }
 
 </script>

@@ -55,7 +55,7 @@
 
                             <p id="warningDiagram" class="text-danger">&nbsp;</p>
 
-                            <button id="addButtonDiagram" class="btn btn-success mt-2" onclick="addElementDiagram()">
+                            <button id="addButtonDiagram" class="btn btn-success mt-2" onclick="addTask()">
                                 Add
                             </button>
                         </div>
@@ -63,24 +63,35 @@
 
                     <div class="tab-pane fade" id="nav-task" role="tabpanel" aria-labelledby="nav-task-tab">
                         <div class="d-flex flex-column ml-5 mt-5">
-                            <label for="fromDependency">from : </label><input id="fromDependency" type="number" disabled>
+                            <label for="fromDependency">from : </label><input id="fromDependency" type="number"
+                                                                              disabled>
                             <label for="toDependency">to : </label><input id="toDependency" type="number">
+                            <!-- TODO SINGLE SELECT -->
 
-                            <button id="addDependency" class="btn btn-success mt-2" onclick="addDependency()">Add</button>
+                            <button id="addDependency" class="btn btn-success mt-2" onclick="addDependency()">Add
+                            </button>
 
                             <label for="dependenciesSelect">Existing dependencies : </label>
                             <select name="dependencies" id="dependenciesSelect" multiple>
 
                             </select>
-                            <button id="addDependency" class="btn btn-danger mt-2" onclick="removeDependencies()">Remove</button>
-                            <button id="addDependency" class="btn btn-danger mt-2" onclick="removeTask()">Remove task</button>
+                            <button id="addDependency" class="btn btn-danger mt-2" onclick="removeDependencies()">Remove
+                                dependencies
+                            </button>
+                            <button id="addDependency" class="btn btn-danger mt-2" onclick="removeTask()">Remove task
+                            </button>
 
                         </div>
                     </div>
 
                     <div class="tab-pane fade" id="nav-dependencies" role="tabpanel"
                          aria-labelledby="nav-dependencies-tab">
-                        EDIT DEPENDENCIES
+                        <div class="d-flex flex-column ml-5 mt-5">
+                            <label for="dependencyId">Dependency : </label><input type="text" disabled id="dependencyId">
+                                    <label for="returnCode">Return code : </label><input type="number" min="0" max="1" id="returnCode">
+                                <label for="anyReturnCodeCheckbox">Any return code ? <input type="checkbox" id="anyReturnCodeCheckbox" onclick="alterEditDependencyInput()"> </label>
+                            <button class="btn btn-primary mt-2" onclick="saveDependency()">Save</button>
+                        </div>
                     </div>
 
                 </div>
