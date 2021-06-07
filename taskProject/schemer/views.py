@@ -135,7 +135,7 @@ def diagram_new_task(request):
 
 def diagram_remove_task(request):
     """
-    route POST that removes a task,
+    route DELETE that removes a task,
     :param request: takes one argument 'id', the task id.
     """
     info = request.POST.dict()
@@ -170,7 +170,7 @@ def diagram_new_dependency(request):
 
 def diagram_edit_dependency(request):
     """
-    route POST that edits an existing dependency by changing the wished return code,
+    route PUT that edits an existing dependency by changing the wished return code,
     :param request: takes 2 parameters, a string 'id' representing the dependency like 'from->to' and the wished
     return code 'returncode'
     """
@@ -196,7 +196,7 @@ def diagram_edit_dependency(request):
 
 def diagram_remove_dependencies(request):
     """
-    route POST that removes at least one dependency to a child task,
+    route DELETE that removes at least one dependency to a child task,
     :param request: takes n parameters, n being the number of dependencies being deleted and the value is the id of
     the dependency like 'from->to'.
     example:    '0=101->102
@@ -211,7 +211,7 @@ def diagram_remove_dependencies(request):
             if task.pk == int(to):
                 dep_list = ast.literal_eval(task.dependency)
                 satis_pattern_list = ast.literal_eval(task.satisfaction_pattern)
-                dep_list.remove(from_)
+                dep_list.remove(int(from_))
                 for val in satis_pattern_list:
                     if from_ in val:
                         satis_pattern_list.remove(val)

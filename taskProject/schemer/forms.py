@@ -20,7 +20,7 @@ class TaskForm(forms.ModelForm):
 
         self.fields['date'] = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
         self.fields['time'] = forms.TimeField(widget=NumberInput(attrs={'type': 'time'}))
-        self.fields['dependency'] = forms.MultipleChoiceField(required=False, choices=self.pks_choices, )
+        self.fields['dependency'] = forms.MultipleChoiceField(required=False, choices=self.pks_choices,)
         self.fields['label'] = forms.CharField(required=False)
         self.fields['cyclic_on'] = forms.ChoiceField(required=False, choices=self.cyclic_choices, help_text='<br> <i> No selection will result in a single execution of that task. </i>')
         self.fields['interval'] = forms.IntegerField(required=False)

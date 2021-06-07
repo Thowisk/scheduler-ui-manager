@@ -231,7 +231,7 @@
         document.getElementById('timeDiagram').value = getCurrentTime()
     }
 
-    function setDiagram(changes) {
+    function setDiagram() {
         var n = JSON.parse('{{ diagram_data|safe }}')
         setDiagramFiles()
         setDiagramInputValue()
@@ -390,7 +390,7 @@
             maxId++
 
             var xhttp = new XMLHttpRequest();
-            xhttp.open('POST', 'diagram_new_task', true);
+            xhttp.open('POST', 'api/diagram_new_task', true);
             xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhttp.setRequestHeader("X-CSRFToken", crsf_token);
             xhttp.send('' +
@@ -408,7 +408,7 @@
 
     function connectToService() {
         var xhttp = new XMLHttpRequest();
-        xhttp.open('GET', 'connect', true)
+        xhttp.open('GET', '/api/connect', true)
         xhttp.send('connection')
         xhttp.onload = function () {
             switch (xhttp.status) {
@@ -485,7 +485,7 @@
         to = document.getElementById('toDependency').value
         if (checkDependenciesInputs()) {
             var xhttp = new XMLHttpRequest();
-            xhttp.open('POST', 'diagram_new_dependency', true);
+            xhttp.open('POST', 'api/diagram_new_dependency', true);
             xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhttp.setRequestHeader("X-CSRFToken", crsf_token);
             xhttp.send('' +
@@ -495,7 +495,7 @@
                 window.location.reload(false)
             }
         } else {
-            alert('Please check if task n° ' + to + ' exists.')
+            alert('Please make sure task n° ' + to + ' exists.')
         }
     }
 
@@ -515,7 +515,7 @@
                 })
                 request = request.substring(0, request.length - 1)
                 var xhttp = new XMLHttpRequest();
-                xhttp.open('POST', 'diagram_remove_dependencies', true);
+                xhttp.open('POST', 'api/diagram_remove_dependencies', true);
                 xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xhttp.setRequestHeader("X-CSRFToken", crsf_token);
                 xhttp.send(request)
@@ -531,7 +531,7 @@
         id = document.getElementById('fromDependency').value
         if (confirm('Are you sure you want to delete task ' + id + ' ?')) {
             var xhttp = new XMLHttpRequest();
-            xhttp.open('POST', 'diagram_remove_task', true);
+            xhttp.open('POST', 'api/diagram_remove_task', true);
             xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhttp.setRequestHeader("X-CSRFToken", crsf_token);
             xhttp.send('id=' + id)
@@ -555,21 +555,23 @@
     }
 
     function saveDependency() {
+
         dependencyId = document.getElementById('dependencyId').value
         if (document.getElementById('anyReturnCodeCheckbox').checked) {
             newReturnCodeValue = 'Any'
         } else {
             newReturnCodeValue = document.getElementById('returnCode').value
         }
+
         var xhttp = new XMLHttpRequest();
-            xhttp.open('POST', 'diagram_edit_dependency', true);
-            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhttp.setRequestHeader("X-CSRFToken", crsf_token);
-            xhttp.send('id='+dependencyId+'&' +
-                'returncode='+newReturnCodeValue)
-            xhttp.onload = function () {
-                window.location.reload(false)
-            }
+        xhttp.open('POST', 'api/diagram_edit_dependency', true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhttp.setRequestHeader("X-CSRFToken", crsf_token);
+        xhttp.send('id=' + dependencyId + '&' +
+            'returncode=' + newReturnCodeValue)
+        xhttp.onload = function () {
+            window.location.reload(false)
+        }
     }
 
     function setInputsAndButtonTaskEditing(state) {
