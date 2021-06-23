@@ -19,11 +19,12 @@ class Task(models.Model):
     satisfaction_pattern = models.CharField(max_length=250, default=[], null=True)
     is_child = models.BooleanField(default=False)
     dependency = models.CharField(max_length=250, default=[], null=True)
-    file = models.FilePathField(null=False, path='C:/Users/'+ os.getlogin() + '/Documents/schedulerService/scripts/', default=None, match='^.*\.(bat|py)$')
+    file = models.FilePathField(null=False, path='C:/Users/'+ os.getlogin() + '/Documents/schedulerService/scripts/', default=None,
+                                match='^.*\.(bat|py)$')
     date = models.DateField(default=datetime.date.today,)
     time = models.TimeField(auto_now=False,)
     label = models.CharField(max_length=100, default='')
     cyclic_on = models.CharField(blank=True, null=True, choices=cyclic_choices, max_length=10)
     interval = models.IntegerField(default=1)
-    state = models.IntegerField(default=None, null=True) # -1: None / 0: OK / 1: KO
+    state = models.IntegerField(default=None, null=True)
     option = models.IntegerField(default=0)

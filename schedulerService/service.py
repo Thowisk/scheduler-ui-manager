@@ -89,14 +89,37 @@ def exec_task(to_exec):
         res = subprocess.run(to_exec)
     return {'script': to_exec, 'result': res}
 
+def exec_task0(script_path):
+    """
+    Executes a Batch or Python file.
+    :param script_path: path to the script to execute
+    :return: a dict that contains the script and a subprocess.CompletedProcess object
+    """
+    res = None
+    file_extension = script_path \
+        .split('/')[-1] \
+        .split('.')[-1]
+    if file_extension is 'py':
+        res = subprocess.run(f'python {script_path}')
+    elif file_extension is 'bat':
+        res = subprocess.run(script_path)
+    return {'script': script_path, 'result': res}
+
+
 def log(task_id, task_info):
     with open(DEFAULT_SERVICE_ROOT + 'logs/LOG', 'a') as file:
-        file.write('[' + datetime.now().__str__() + '] task with id ' + str(task_id) + ' returned code ' + str(task_info['result'].returncode) + ' after ' + task_info['script'].split('/')[-1] + ' execution\n')
+        file.write('['+ str(datetime.now())+ '] task with id '+ str(task_id)
+                   + ' returned code '+ str(task_info['result'].returncode)
+                   + ' after '+ task_info['script'].split('/')[-1]
+                   + ' execution\n')
 
 def listener(event):
     log(str(event.job_id), event.retval)
     base_url = 'http://127.0.0.1:8000/schemer/job_return?'
-    requests.request('GET', base_url + 'id=' + str(event.job_id) + '&state=' + str(event.retval['result'].returncode))
+    requests.request('GET',
+                     base_url
+                     + 'id=' + str(event.job_id)
+                     + '&state=' + str(event.retval['result'].returncode))
 
     # id_parts = str(event.job_id).split('_')
     # if len(id_parts) == 3:

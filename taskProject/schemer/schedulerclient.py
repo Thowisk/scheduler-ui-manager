@@ -1,7 +1,7 @@
 import rpyc
 from .models import Task
 from .utils import *
-from .taskdependencies import TaskDependencies, TaskWaitingList
+from .taskdependencies import TaskWaitingList
 
 
 class SchedulerClient:
