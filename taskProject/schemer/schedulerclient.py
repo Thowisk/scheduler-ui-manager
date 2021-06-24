@@ -80,3 +80,16 @@ class SchedulerClient:
             SchedulerClient.conn.root.remove_job(str(job_id))
         except:
             print(' /!\\ Couldn\'t get a connection to the scheduler service /!\\')
+
+
+
+class SchedulerService(rpyc.Service):
+
+    def exposed_add_job(self, *args ,**kwargs):
+        return scheduler.add_job(*args, **kwargs)
+
+    def exposed_remove_job(self, *args, **kwargs):
+        return scheduler.remove_job(*args, **kwargs)
+
+    ...
+

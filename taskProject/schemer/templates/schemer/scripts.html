@@ -408,7 +408,7 @@
 
     function connectToService() {
         var xhttp = new XMLHttpRequest();
-        xhttp.open('GET', '/api/connect', true)
+        xhttp.open('GET', 'api/connect', true)
         xhttp.send('connection')
         xhttp.onload = function () {
             switch (xhttp.status) {

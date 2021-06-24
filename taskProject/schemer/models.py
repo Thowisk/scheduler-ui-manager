@@ -28,3 +28,5 @@ class Task(models.Model):
     interval = models.IntegerField(default=1)
     state = models.IntegerField(default=None, null=True)
     option = models.IntegerField(default=0)
+
+
