@@ -1,7 +1,7 @@
 import json
 import ast
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from .models import Task
 from .forms import TaskForm
 from .schedulerclient import SchedulerClient

@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-from dateutil import tz
+from datetime import datetime
 def date_and_time_to_datetime(date, time):
     """
     :param date: hh:mm:ss

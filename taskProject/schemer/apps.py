@@ -1,5 +1,3 @@
-import traceback
-
 from django.apps import AppConfig
 
 
